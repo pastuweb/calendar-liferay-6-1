@@ -1,6 +1,5 @@
 </div>
 <br>
-
 <script type="text/javascript" >
 
 var icons = {
@@ -55,6 +54,12 @@ $(document).ready(function(){
 	    	icons: icons,
 	    	collapsible: true
 	   	});
+		
+		$("#accordionFilter").accordion({
+	    	icons: icons,
+	    	collapsible: true
+	   	});
+		
 		$("#slider-durata").slider({
 		      range: "max",
 		      min: 1,
@@ -101,7 +106,7 @@ $(document).ready(function(){
     	      width: 400,
     	      buttons: [
     	                {
-    	                    text: "Crea Evento",
+    	                    text: "Crate event",
     	                    click: function() {
     	                    	//alert("Evento in Creazione");
     	                    	form[0].submit();
@@ -123,6 +128,20 @@ $(document).ready(function(){
     	$( "#addEvent" ).button().on( "click", function() {
   	      	dialog.dialog( "open" );
   		}); 
+    	
+    	$("#filterCalendarType").button().on( "click", function() {
+  	      	alert("In Construction");
+  		}); 
+    	
+    	$(".chkTypeEvent").change(function() {
+            if($(this).is(":checked")) {
+             	$("#checkedTypeAgendaItems").val($("#checkedTypeAgendaItems").val()+"#"+$(this).val());
+             
+            }else{
+              $("#checkedTypeAgendaItems").val($("#checkedTypeAgendaItems").val().replace($(this).val()+"#",""));
+              $("#checkedTypeAgendaItems").val($("#checkedTypeAgendaItems").val().replace("#"+$(this).val(),""));
+            }
+		 });
     	
     	
 });
