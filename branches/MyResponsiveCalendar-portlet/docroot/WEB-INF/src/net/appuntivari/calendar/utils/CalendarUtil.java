@@ -22,13 +22,13 @@ public class CalendarUtil {
 	
 	private static Logger log = Logger.getLogger(CalendarUtil.class);
 	
-	public static List<CalendarEvent> getEventi(long userId, long groupId){
+	public static List<CalendarEvent> getEvents(long userId, long groupId){
 			Long companyId = CompanyThreadLocal.getCompanyId();
 			log.info("getEvents of companyId "+companyId + " and groupId "+groupId + " userId "+userId);
 			
-			Calendar calStart = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-			Calendar calEnd = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-			Calendar calEndDate = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+			Calendar calStart = Calendar.getInstance();
+			Calendar calEnd = Calendar.getInstance();
+			Calendar calEndDate = Calendar.getInstance();
 			CalendarEvent item = null;
 			
 			String repeatDescritpion;
@@ -144,6 +144,214 @@ public class CalendarUtil {
 			return result;
 	}
 	
+	public static List<CalendarEvent> getEventsForExports(long userId, long groupId, String exportType){
+		Long companyId = CompanyThreadLocal.getCompanyId();
+		log.info("getEventiForExports of companyId "+companyId + " and groupId "+groupId + " userId "+userId+" exportType "+exportType);		
+		
+		List<CalendarEvent> eventsList = getEvents(userId, groupId);
+		log.info("eventsList "+eventsList.size());
+		List<CalendarEvent> finalResult = new ArrayList<CalendarEvent>(); 
+		
+		//Today
+		Calendar calToday = Calendar.getInstance();
+		calToday.setTime(new Date());	
+		int ddToday=calToday.get(Calendar.DATE);
+		int MMToday=calToday.get(Calendar.MONTH)+1;
+		int yyyyToday=calToday.get(Calendar.YEAR);
+		log.info("calToday "+ddToday+"-"+MMToday+"-"+yyyyToday);
+		
+		for(CalendarEvent item : eventsList){
+			//log.info("item "+item.getStartDay()+"-"+item.getStartMonth()+"-"+item.getStartYear());
+			if(exportType.equals("today_tomorrow")){
+				//log.info("today_tomorrow");
+				Calendar calTomorrow = Calendar.getInstance();
+				calTomorrow.setTime(calToday.getTime());
+				calTomorrow.add(Calendar.DATE,1);
+				int ddTomorrow=calTomorrow.get(Calendar.DATE);
+				int MMTomorrow=calTomorrow.get(Calendar.MONTH)+1;
+				int yyyyTomorrow=calTomorrow.get(Calendar.YEAR);
+				
+				if( (ddToday == item.getStartDay() && MMToday == (item.getStartMonth()+1) && yyyyToday == item.getStartYear()) || 
+						(ddTomorrow == item.getStartDay() && MMTomorrow == (item.getStartMonth()+1) && yyyyTomorrow == item.getStartYear())  ){
+					//OK
+					log.info("event title added : "+item.getTitle());
+					finalResult.add(item);
+				}else{
+					continue;
+				}
+				
+			}else if(exportType.equals("current_month")){
+				//log.info("current_month");
+				if( MMToday == (item.getStartMonth()+1) && yyyyToday == item.getStartYear()){
+					//OK
+					log.info("event title added : "+item.getTitle());
+					finalResult.add(item);
+				}else{
+					continue;
+				}
+			
+			}else if(exportType.equals("next_events")){
+				//log.info("next_events");
+				Calendar calItem = Calendar.getInstance();
+				calItem.set(Calendar.DATE, item.getStartDay());
+				calItem.set(Calendar.MONTH, item.getStartMonth()-1);
+				calItem.set(Calendar.YEAR, item.getStartYear());
+				
+				log.info("calItem "+ calItem.getTime());
+				log.info("calToday "+ calToday.getTime());
+				if(  calItem.getTime().after(calToday.getTime())  ){
+					//OK
+					log.info("event title added : "+item.getTitle());
+					finalResult.add(item);
+				}else{
+					continue;
+				}
+
+			}else if(exportType.equals("past_events")){
+				//log.info("past_events");
+				Calendar calItem = Calendar.getInstance();
+				calItem.set(Calendar.DATE, item.getStartDay());
+				calItem.set(Calendar.MONTH, item.getStartMonth()-1);
+				calItem.set(Calendar.YEAR, item.getStartYear());
+							
+				log.info("calItem "+ calItem.getTime());
+				log.info("calToday "+ calToday.getTime());
+				if(  calItem.getTime().before(calToday.getTime())  ){
+					//OK
+					log.info("event title added : "+item.getTitle());
+					finalResult.add(item);
+				}else{
+					continue;
+				}
+			}
+			
+		}
+
+		
+		return finalResult;
+	}
+	
+	public static List<CalendarEvent> getEventsByType(long userId, long groupId, String type){
+		Long companyId = CompanyThreadLocal.getCompanyId();
+		log.info("getEventi of companyId "+companyId + " and groupId "+groupId + " userId "+userId+" type "+type);
+
+		Calendar calStart = Calendar.getInstance();
+		Calendar calEnd = Calendar.getInstance();
+		Calendar calEndDate = Calendar.getInstance();
+		CalendarEvent item = null;
+		
+		String repeatDescritpion;
+		List<CalendarEvent> result = new ArrayList<CalendarEvent>(); 
+		try {
+			List<CalEvent> listaEventi = CalEventLocalServiceUtil.getCompanyEvents(companyId, 0, CalEventLocalServiceUtil.getCompanyEventsCount(companyId));
+			for (CalEvent calEvent : listaEventi) {
+				if(calEvent.getUserId() == userId && calEvent.getGroupId() == groupId && calEvent.getType().toLowerCase().contains(type)){
+
+					calStart.setTime(calEvent.getStartDate());
+					calEnd.setTime(calStart.getTime());
+					calEnd.add(Calendar.HOUR_OF_DAY, calEvent.getDurationHour());
+			
+					if(calEvent.getRepeating()){
+						
+						//exist an ENDDATE
+						if(calEvent.getRecurrenceObj() != null){
+						Date endDate = calEvent.getEndDate();
+						calEndDate.setTime(endDate);
+						calEndDate.add(Calendar.DATE, 1);
+						
+							while(calStart.getTime().before(calEndDate.getTime())){
+									if(calEvent.getRecurrenceObj().getFrequency() == 3){ //daily
+										
+										repeatDescritpion = "repeat daily until "+(calEndDate.get(Calendar.DATE)-1)+"/"+(calEndDate.get(Calendar.MONTH)+1)+"/"+calEndDate.get(Calendar.YEAR);
+										
+										item = createCalendarEvent(calEvent.getEventId(), calEvent.getTitle(),calEvent.getDescription(),calEvent.getLocation(),
+												calStart.get(Calendar.DATE),calStart.get(Calendar.MONTH),calStart.get(Calendar.YEAR),calStart.get(Calendar.HOUR_OF_DAY),calStart.get(Calendar.MINUTE),
+												calEnd.get(Calendar.DATE),calEnd.get(Calendar.MONTH),calEnd.get(Calendar.YEAR),calEnd.get(Calendar.HOUR_OF_DAY),calEnd.get(Calendar.MINUTE),
+												calEvent.getRemindBy(), calEvent.getType(), repeatDescritpion
+												);
+										
+										//aggiungo evento alla lista in Output
+										result.add(item);
+										
+										calStart.add(Calendar.DATE, 1);
+										calEnd.setTime(calStart.getTime());
+										calEnd.add(Calendar.HOUR_OF_DAY, calEvent.getDurationHour());
+									
+									}else if(calEvent.getRecurrenceObj().getFrequency() == 4){ //weekly
+										
+										int dayOfWeek = calEvent.getRecurrenceObj().getByDay()[0].getDayOfWeek(); //1=Sunday, --- , 7=Saturday
+										if(calStart.get(Calendar.DAY_OF_WEEK) == dayOfWeek){
+											
+											repeatDescritpion = "repeat weekly "+getDayOfWeekName(dayOfWeek)+" until "+(calEndDate.get(Calendar.DATE)-1)+"/"+calEndDate.get(Calendar.MONTH)+"/"+calEndDate.get(Calendar.YEAR);
+											
+											calEnd.setTime(calStart.getTime());
+											calEnd.add(Calendar.HOUR_OF_DAY, calEvent.getDurationHour());
+											
+											item = createCalendarEvent(calEvent.getEventId(), calEvent.getTitle(),calEvent.getDescription(),calEvent.getLocation(),
+													calStart.get(Calendar.DATE),calStart.get(Calendar.MONTH),calStart.get(Calendar.YEAR),calStart.get(Calendar.HOUR_OF_DAY),calStart.get(Calendar.MINUTE),
+													calEnd.get(Calendar.DATE),calEnd.get(Calendar.MONTH),calEnd.get(Calendar.YEAR),calEnd.get(Calendar.HOUR_OF_DAY),calEnd.get(Calendar.MINUTE),
+													calEvent.getRemindBy(), calEvent.getType(), repeatDescritpion
+													);
+										
+											//aggiungo evento alla lista in Output
+											result.add(item);
+												
+											calStart.add(Calendar.DATE, 7);
+											calEnd.setTime(calStart.getTime());
+											calEnd.add(Calendar.HOUR_OF_DAY, calEvent.getDurationHour());
+											
+										}else{
+											
+											calStart.add(Calendar.DATE, 1);
+											calEnd.setTime(calStart.getTime());
+											calEnd.add(Calendar.HOUR_OF_DAY, calEvent.getDurationHour());
+											
+											continue;
+										}
+
+										
+									}else if(calEvent.getRecurrenceObj().getFrequency() == 5){ //monthly
+										
+										calStart.add(Calendar.MONTH,1);
+										calEnd.setTime(calStart.getTime());
+										calEnd.add(Calendar.HOUR_OF_DAY, calEvent.getDurationHour());
+										
+										repeatDescritpion = "repeat monthly at "+calStart.get(Calendar.DATE)+" until "+(calEndDate.get(Calendar.DATE)-1)+"/"+calEndDate.get(Calendar.MONTH)+"/"+calEndDate.get(Calendar.YEAR);
+										
+										item = createCalendarEvent(calEvent.getEventId(), calEvent.getTitle(),calEvent.getDescription(),calEvent.getLocation(),
+												calStart.get(Calendar.DATE),calStart.get(Calendar.MONTH),calStart.get(Calendar.YEAR),calStart.get(Calendar.HOUR_OF_DAY),calStart.get(Calendar.MINUTE),
+												calEnd.get(Calendar.DATE),calEnd.get(Calendar.MONTH),calEnd.get(Calendar.YEAR),calEnd.get(Calendar.HOUR_OF_DAY),calEnd.get(Calendar.MINUTE),
+												calEvent.getRemindBy(), calEvent.getType(), repeatDescritpion
+												);
+										
+										//aggiungo evento alla lista in Output
+										result.add(item);
+										
+									}
+									
+									
+							}
+							
+						}
+					}else{
+						//aggiungo evento alla lista in Output
+						item = createCalendarEvent(calEvent.getEventId(), calEvent.getTitle(),calEvent.getDescription(),calEvent.getLocation(),
+								calStart.get(Calendar.DATE),calStart.get(Calendar.MONTH),calStart.get(Calendar.YEAR),calStart.get(Calendar.HOUR_OF_DAY),calStart.get(Calendar.MINUTE),
+								calEnd.get(Calendar.DATE),calEnd.get(Calendar.MONTH),calEnd.get(Calendar.YEAR),calEnd.get(Calendar.HOUR_OF_DAY),calEnd.get(Calendar.MINUTE),
+								calEvent.getRemindBy(), calEvent.getType(), "no repeat"
+								);
+						result.add(item);
+					}
+					
+					
+				}
+			}
+		} catch (SystemException e) {
+			e.printStackTrace();
+		}
+
+		return result;
+	}
 	
 	public static CalendarEvent createCalendarEvent(long eventId, String title, String descr, String location, 
 			int startDay, int startMonth, int startYear, int startHour, int startMinutes,
@@ -173,9 +381,9 @@ public class CalendarUtil {
 		
 		Date today = new Date();
 		Date tomorrow = new Date();
-		Calendar calToday = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+		Calendar calToday = Calendar.getInstance();
 		calToday.setTime(today);
-		Calendar calTomorrow = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+		Calendar calTomorrow = Calendar.getInstance();
 		calTomorrow.setTime(tomorrow);
 		calTomorrow.add(Calendar.DATE, 1);
 		int priority = 1;
@@ -191,8 +399,6 @@ public class CalendarUtil {
 		
 		if(reminBy == 1){
 			item.setDeviceRemind("Email");
-		}else if(reminBy == 2){
-			item.setDeviceRemind("SMS");
 		}else{
 			item.setDeviceRemind(null);
 		}
@@ -210,8 +416,6 @@ public class CalendarUtil {
 			item.setTipoEvento("Interview");
 		}else if(tipoEvento.equals("meeting")){
 			item.setTipoEvento("Meeting");
-		}else if(tipoEvento.equals("net-event")){
-			item.setTipoEvento("Net Event");
 		}else if(tipoEvento.equals("vacation")){
 			item.setTipoEvento("Vacation");
 		}
@@ -225,11 +429,9 @@ public class CalendarUtil {
 			utente = UserLocalServiceUtil.getUser(userId);
 			return utente;
 		} catch (PortalException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		} catch (SystemException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
@@ -253,6 +455,7 @@ public class CalendarUtil {
 		}
 		return null;
 	}
+	
 	
 	
 }
