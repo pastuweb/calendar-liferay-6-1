@@ -1,5 +1,7 @@
 # calendar-liferay-6-1
-Calendar Plugin in Liferay 6.1
+-
+It was a project shared by Google Code Hosting Projects.
+-
 
 This plugin (or portlet project) does no more than propose a timetable responsive (mobile or desktop) for the Liferay portal 6.1. 
 
@@ -9,7 +11,8 @@ For the back-end I used the API Liferay 6.1 and specifically those of the model 
 
 The features are small compared to the original plugin. It lets you create events periodically and remind limited. 
 
-E 'was also set up a scheduler to manage Crontab remind of type text messages and emails. (everyone if they can customize as they see fit), and the ability to export the events in PDF format (to be developed)
+It was also set up a scheduler to manage Crontab remind of type text messages and emails. (everyone if they can customize as they see fit), and the ability to export the events in PDF format (to be developed)
 
-##########################################################
+-
 Required Deployment Contexts: Pasturenzi-hook
+-
