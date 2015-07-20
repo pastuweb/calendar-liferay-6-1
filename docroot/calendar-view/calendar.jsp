@@ -4,14 +4,98 @@
 	<%
 	long remote_userid =  PrincipalThreadLocal.getUserId();
 	User utente = CalendarUtil.getCalendarUser(remote_userid);
-	
-	if(utente != null){		
-	List<CalendarEvent> lista = CalendarUtil.getEventi(remote_userid,themeDisplay.getScopeGroupId());
+	Boolean isEnableFilterAgenda = (Boolean) request.getAttribute("isEnableFilterAgenda");
 	%>
-	
 	<portlet:actionURL name="createEvent" var="createEventURL"/>
 	<portlet:actionURL name="deleteEvent" var="deleteEventURL"/>
+	<!-- for Exports PDF -->
+	<portlet:resourceURL var="exportsPdfTodayTomorrowURL" escapeXml="false">
+		<portlet:param name="exportPdf" value="today_tomorrow"/>
+		<portlet:param name="username" value="<%=utente.getScreenName() %>"/>
+		<portlet:param name="userId" value="<%=String.valueOf(remote_userid) %>"/>
+		<portlet:param name="groupId" value="<%=String.valueOf(themeDisplay.getScopeGroupId()) %>"/>
+	</portlet:resourceURL> 
+	<portlet:resourceURL var="exportsPdfCurrentMonthURL" escapeXml="false">
+		<portlet:param name="exportPdf" value="current_month"/>
+		<portlet:param name="username" value="<%=utente.getScreenName() %>"/>
+		<portlet:param name="userId" value="<%=String.valueOf(remote_userid) %>"/>
+		<portlet:param name="groupId" value="<%=String.valueOf(themeDisplay.getScopeGroupId()) %>"/>
+	</portlet:resourceURL> 
+	<portlet:resourceURL var="exportsPdfNextEventsURL" escapeXml="false">
+		<portlet:param name="exportPdf" value="next_events"/>
+		<portlet:param name="username" value="<%=utente.getScreenName() %>"/>
+		<portlet:param name="userId" value="<%=String.valueOf(remote_userid) %>"/>
+		<portlet:param name="groupId" value="<%=String.valueOf(themeDisplay.getScopeGroupId()) %>"/>
+	</portlet:resourceURL> 
+	<portlet:resourceURL var="exportsPdfPastEventsURL" escapeXml="false">
+		<portlet:param name="exportPdf" value="past_events"/>
+		<portlet:param name="username" value="<%=utente.getScreenName() %>"/>
+		<portlet:param name="userId" value="<%=String.valueOf(remote_userid) %>"/>
+		<portlet:param name="groupId" value="<%=String.valueOf(themeDisplay.getScopeGroupId()) %>"/>
+	</portlet:resourceURL>
+	<portlet:actionURL name="executeFilterTypeAgenda" var="executeFilterTypeAgendaURL"/>
 	
+	<liferay-ui:success key="eventi-filtrati-per-tipo-agenda" message="eventi-filtrati-per-tipo-agenda" />
+	
+	<%
+	if(utente != null){		
+		List<CalendarEvent> lista = new ArrayList<CalendarEvent>();
+		if(isEnableFilterAgenda != null){
+			lista = (List<CalendarEvent>)request.getAttribute("listEventsFiltered");
+		}else{
+			lista = CalendarUtil.getEvents(remote_userid,themeDisplay.getScopeGroupId());
+		}
+	%>
+	<div id="accordionFilter">
+		<h3> Filter by type:</h3>
+		<%
+		String itemsSelected = (String) request.getAttribute("itemsSelected");
+		String chkAll = " ";
+		String chkAppointment = " ";
+		String chkEvent = " ";
+		String chkCall = " ";
+		String chkInterview = " ";
+		String chkMeeting = " ";
+		String chkVacation = " ";
+		
+		
+		if(itemsSelected != null){
+			if(itemsSelected.contains("all"))
+				chkAll = "checked=\"checked\"";
+			if(itemsSelected.contains("appointment"))
+				chkAppointment = "checked=\"checked\"";
+			if(itemsSelected.contains("event"))
+				chkEvent= "checked=\"checked\"";
+			
+			if(itemsSelected.contains("call"))
+				chkCall= "checked=\"checked\"";
+			if(itemsSelected.contains("interview"))
+				chkInterview= "checked=\"checked\"";
+			if(itemsSelected.contains("meeting"))
+				chkMeeting= "checked=\"checked\"";
+			if(itemsSelected.contains("vacation"))
+				chkVacation= "checked=\"checked\"";
+			
+		}else{
+			chkAll = "checked=\"checked\"";
+		}
+		%>
+		<div>
+		<form id="formCreateEvent" action="<%= executeFilterTypeAgendaURL.toString() %>" method="post">
+			<input type="checkbox" name="filterTypeAgenda" value="all" <%=chkAll %> class="chkTypeEvent"/>Tutti (default) 
+			<input type="checkbox" name="filterTypeAgenda" value="appointment" <%=chkAppointment %> class="chkTypeEvent"/> Appointment
+			<input type="checkbox" name="filterTypeAgenda" value="event" <%=chkEvent %> class="chkTypeEvent"/> Generic Event
+			<br>
+			<input type="checkbox" name="filterTypeAgenda" value="call" <%=chkCall %> class="chkTypeEvent"/> Call
+			<input type="checkbox" name="filterTypeAgenda" value="interview" <%=chkInterview %> class="chkTypeEvent"/> Interview
+			<input type="checkbox" name="filterTypeAgenda" value="meeting" <%=chkMeeting %> class="chkTypeEvent"/> Meeting
+			<input type="checkbox" name="filterTypeAgenda" value="vacation" <%=chkVacation %> class="chkTypeEvent"/> Vacation
+			<br>
+			<input name="checkedTypeAgendaItems" id="checkedTypeAgendaItems" type="hidden" value="" />
+			<input type="submit" name="Filtra" id="filtraCalendarType" value="Filter" />
+		</form>
+		</div>
+	</div>
 	
 	<div style="position:relative;">
 		<div style="position:relative;">
@@ -30,10 +114,10 @@
 			<div id="exports" style="width:20%;float:left;"> 
 				<p><strong>Exports</strong> in <img src="<%=request.getContextPath()%>/images/pdf.png" alt="Download Events in PDF" style="width:30px;"/>:</p><br>
 				<ul>
-					<li><a href="#"> &gt; TODAY and TOMORROW events</a></li> 
-					<li><a href="#"> &gt; Current MONTH events</a></li>
-					<li><a href="#"> &gt; NEXT events</a></li>
-					<li><a href="#"> &gt; PAST events</a></li>
+					<li><a  href="<%=exportsPdfTodayTomorrowURL%>" target="_blank"> &gt; TODAY and TOMORROW events</a></li> 
+					<li><a  href="<%=exportsPdfCurrentMonthURL%>" target="_blank"> &gt; Current MONTH events</a></li>
+					<li><a  href="<%=exportsPdfNextEventsURL%>" target="_blank"> &gt; NEXT events</a></li>
+					<li><a  href="<%=exportsPdfPastEventsURL%>" target="_blank"> &gt; PAST events</a></li>
 				</ul>
 			</div>
 			<div style="clear:left;"></div>
@@ -58,7 +142,7 @@
 		<form id="formCreateEvent" action="<%= createEventURL.toString() %>" method="post">
 			<div id="accordion">
 				<h3> Insert: <span style="color:#FF0000 !important">Start Date</span>, <span style="color:#FF0000 !important">End Date</span>, 
-				<span style="color:#FF0000 !important">duartion in hours</span> o <span style="color:#FF0000 !important">daily</span>.</h3>
+				<span style="color:#FF0000 !important">duration in hours</span> o <span style="color:#FF0000 !important">daily</span>.</h3>
 				<div>
 				<label for="datepickerFrom">Start Date</label>
 				<input type="text" id="datepickerFrom" name="datepickerFrom">
@@ -102,7 +186,6 @@
 				      <option value="event">Event</option>
 				      <option value="interview">Interview</option>
 				      <option value="meeting">Meeting</option>
-				      <option value="net-event">Net Event</option>
 				      <option value="vacation">Vacation</option>
 				    </select>
 				</div>
@@ -169,7 +252,6 @@
 						<div id="reminds">
 						    <input type="radio" id="remind_never" name="reminds" value="never" checked="checked"><label for="remind_never">Never</label>
 						    <input type="radio" id="remind_email" name="reminds" value="email" ><label for="remind_email">Email</label>
-						    <input type="radio" id="remind_sms" name="reminds" value="sms" ><label for="remind_sms">SMS (Google Cloud)</label>
 						 </div>
 					 </div>
 					</div>
@@ -201,12 +283,13 @@ var events_array = new Array();
 			}
 		%>
 		
+		
 		var formDeleteEvent = "<%=item.getDescription()%> <br>(<%=item.getLocation()%>) <%=remindBy%> [<%=item.getTipoEvento()%>] <br> <strong><%=item.getRepeatDescrition()%></strong> <br> <form id=\"formDeleteEvent\" action=\"<%=deleteEventURL.toString()%>\" method=\"post\">"+
 								"<input type=\"hidden\" name=\"eventId\" id=\"eventId\" value=\"<%=item.getEventId()%>\" /> <input type=\"submit\" name=\"deleteEvent\" value=\"Delete\" style=\"background:url(\"<%=deleteEvento%>\");\"/> </form> ";
 		events_array.push({
 				startDate: new Date(<%=item.getStartYear()%>,<%=item.getStartMonth()%>,<%=item.getStartDay()%>,<%=item.getStartHour()%>,<%=item.getStartMinutes()%>),
 				endDate: new Date(<%=item.getEndYear()%>,<%=item.getEndMonth()%>,<%=item.getEndDay()%>,<%=item.getEndHour()%>,<%=item.getEndMinutes()%>),
-				title: "<%=item.getTitle()%>", 
+				title: "<%=item.getTitle()%>"+"<strong style=\"color:#000000;font-size:18px;\">[<%=item.getTipoEvento()%>]</strong>", 
 				description: formDeleteEvent, 
 				priority:<%=item.getPriority()%>
 		});
