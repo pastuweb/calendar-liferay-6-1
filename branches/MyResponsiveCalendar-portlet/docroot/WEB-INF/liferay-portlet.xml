@@ -11,31 +11,39 @@
 		<scheduler-entry>
 				<!-- http://www.cronmaker.com/ -->
 				<scheduler-description>
-					This scheduler is used cehck if there are events in Calendar and trigger remind email/sms
+					This scheduler is used check if there are events in Calendar and trigger remind Sms Agenda  (5 minutes before)
 				</scheduler-description>
 	 			<scheduler-event-listener-class>
-	 			com.telecomlab.calendar.scheduler.MySchedulerCalendarInDayJobListener
+	 			net.appuntivari.calendar.scheduler.MySmsSchedulerCalendarInDayJobListener
 	 			</scheduler-event-listener-class>
 	 			<trigger>
 	 				<cron>
-	 					<cron-trigger-value>0 0/10 * 1/1 * ? *</cron-trigger-value>
+	 					<cron-trigger-value>0 0/5 * 1/1 * ? *</cron-trigger-value>
 	 				</cron>
 	 			</trigger>
  		</scheduler-entry>
  		
- 		
+ 		<scheduler-entry>
+				<!-- http://www.cronmaker.com/ -->
+				<scheduler-description>
+					This scheduler is used check if there are events in Calendar and trigger remind Email Agenda (1 day before start at 6:00)
+				</scheduler-description>
+	 			<scheduler-event-listener-class>
+	 			net.appuntivari.calendar.scheduler.MyEmailSchedulerCalendarInDayJobListener
+	 			</scheduler-event-listener-class>
+	 			<trigger>
+	 				<cron>
+	 					<cron-trigger-value>0 0 6 1/1 * ? *</cron-trigger-value>
+	 				</cron>
+	 			</trigger>
+ 		</scheduler-entry>
+
 		<instanceable>false</instanceable>
     	<header-portlet-css>/css/main.css</header-portlet-css>
     	<header-portlet-javascript>/js/main.js</header-portlet-javascript>   
-    	
- 		
 
 	</portlet>
-	
-	
-	
-	
-	
+
 	<role-mapper>
 		<role-name>administrator</role-name>
 		<role-link>Administrator</role-link>
