@@ -29,12 +29,6 @@
 <%@ page import="com.liferay.portal.service.permission.PortletPermissionUtil" %>
 <%@ page import="com.liferay.portal.service.UserLocalServiceUtil"%>
 
-<%@ page import="com.telecomlab.nhapi.model.*" %>
-<%@ page import="com.telecomlab.nhapi.service.*" %>
-<%@ page import="com.telecomlab.nhapi.custom.utils.ActionUtil" %>
-<%@ page import="com.telecomlab.nhapi.custom.utils.Config" %>
-<%@ page import="com.telecomlab.nhapi.custom.utils.ActionUtilChecker" %>
-<%@ page import="com.telecomlab.nhapi.custom.utils.ActionUtilValidator" %>
 <%@ page import="com.liferay.portal.security.auth.PrincipalThreadLocal"%>
 
 <%@ page import="com.liferay.portal.service.UserLocalServiceUtil"%>
@@ -43,7 +37,6 @@
 
 <%@ page import="com.liferay.portal.model.User" %>
 <%@ page import="com.liferay.portal.service.UserLocalServiceUtil" %>
-
 
 <%@ page import="javax.portlet.PortletURL" %>
 
