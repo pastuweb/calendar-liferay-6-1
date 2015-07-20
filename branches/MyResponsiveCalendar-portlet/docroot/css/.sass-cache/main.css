@@ -1,7 +1,7 @@
 @charset "utf-8";
 /* CSS Document */
 body {
-  background: #e9ecf0 url(../images/demo_bg.jpg) 0 0 repeat-x;
+  background: #FFFFFF;
   font-family: "Trebuchet MS", Arial, Helvetica, sans-serif; }
 
 a {
@@ -286,4 +286,10 @@ del {
 table {
   border-collapse: collapse;
   border-spacing: 0; }
+
+#dialog-formInserisciEvento {
+  width: 700px !important; }
+
+.ui-dialog {
+  width: 730px !important; }
 
